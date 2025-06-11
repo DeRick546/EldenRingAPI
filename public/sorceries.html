@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <meta name="description" content="Elden Ring - Portfolio" />
+  <meta name="author" content="Rick de Cuijper" />
+  <title>Elden Ring - Portfolio</title>
+  <link rel="icon" href="./Assets/swordIcon.png" type="image/x-icon" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="min-h-screen bg-gray-100 text-gray-800 font-sans">
+
+  <!-- Header -->
+  <header class="bg-white shadow p-6 text-center">
+    <h1 class="text-4xl font-bold">Elden Ring - Portfolio</h1>
+    <nav class="mt-4">
+      <ul class="flex justify-center items-center space-x-6">
+        <li><a href="index.html" class="text-blue-600 hover:underline">Bosses</a></li>
+        <li><a href="armors.html" class="text-blue-600 hover:underline">Armors</a></li>
+        <li><a href="weapons.html" class="text-blue-600 hover:underline">Weapons</a></li>
+        <li><a href="incantations.html" class="text-blue-600 hover:underline">Incantations</a></li>
+        <li><a href="sorceries.html" class="text-blue-800 font-semibold underline">Sorceries</a></li>
+        <li><a href="talismans.html" class="text-blue-600 hover:underline">Talismans</a></li>
+        <li>
+          <a href="https://hz.nl/" target="_blank" rel="noopener noreferrer">
+            <img src="./Assets/hz_logo.png" alt="HZ University Logo" class="h-10" />
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-6xl mx-auto p-6">
+    <section class="text-center mb-12">
+      <h2 class="text-3xl font-semibold mb-4">Elden Ring: Sorceries</h2>
+      <p class="text-gray-600">Explore the magical might of the Lands Between.</p>
+    </section>
+
+    <!-- Search -->
+    <section class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+      <input type="text" id="searchInput" placeholder="Search sorcery by name..."
+        class="w-full p-2 border border-gray-300 rounded-lg" />
+      <button onclick="searchItems()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Search</button>
+    </section>
+
+    <!-- Grid -->
+    <div id="itemGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+
+    <!-- Pagination -->
+    <div class="flex justify-center gap-4 mt-10">
+      <button onclick="prevPage()" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Previous</button>
+      <button onclick="nextPage()" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Next</button>
+    </div>
+  </main>
+
+  <!-- Modal -->
+  <section id="itemModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <article class="bg-white p-6 rounded-xl max-w-xl w-full relative shadow-xl">
+      <button onclick="closeModal()" class="absolute top-2 right-4 text-gray-500 text-2xl font-bold">&times;</button>
+      <h2 id="modalTitle" class="text-2xl font-bold mb-2"></h2>
+      <img id="modalImg" class="w-full h-64 object-cover rounded-xl mb-4" />
+      <p id="modalDesc" class="text-gray-700"></p>
+    </article>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-white shadow-inner p-6 text-center text-sm text-gray-700 mt-12">
+    <p>Author: Rick de Cuijper · Contact: <a href="mailto:cuij003@hz.nl" class="text-blue-600 hover:underline">cuij003@hz.nl</a></p>
+    <p>
+      <a href="https://hz.nl/" target="_blank" class="hover:underline">HZ Website</a> |
+      <a href="https://learn.hz.nl/my/" target="_blank" class="hover:underline">HZ Learn</a> |
+      <a href="https://github.com/DeRick546" target="_blank" class="hover:underline">My GitHub</a>
+    </p>
+  </footer>
+
+  <!-- Script -->
+  <script>
+    const grid = document.getElementById("itemGrid");
+    let currentPage = 0;
+    const limit = 12;
+
+    async function fetchItems(query = "") {
+      grid.innerHTML = `<p class="col-span-3 text-center text-gray-500">Loading sorceries...</p>`;
+      let url = `https://eldenring.fanapis.com/api/sorceries?limit=${limit}&page=${currentPage}`;
+      if (query) url += `&name=${encodeURIComponent(query)}`;
+
+      try {
+        const res = await fetch(url);
+        const json = await res.json();
+        grid.innerHTML = "";
+
+        if (!json.data || json.data.length === 0) {
+          grid.innerHTML = `<p class="col-span-3 text-center text-gray-500">No sorceries found.</p>`;
+          return;
+        }
+
+        json.data.forEach(item => {
+          const card = document.createElement("div");
+          card.className = "bg-white p-4 rounded-xl shadow-md cursor-pointer transition hover:scale-105";
+          card.innerHTML = `
+            <img src="${item.image || './Assets/placeholder.jpg'}" alt="${item.name}" class="w-full h-48 object-cover rounded mb-3" />
+            <h3 class="text-xl font-semibold mb-1">${item.name}</h3>
+            <p class="text-sm text-gray-600">${item.description || 'No description available.'}</p>
+          `;
+          card.onclick = () => openModal(item);
+          grid.appendChild(card);
+        });
+      } catch (err) {
+        console.error(err);
+        grid.innerHTML = `<p class="col-span-3 text-center text-red-500">Failed to load sorceries.</p>`;
+      }
+    }
+
+    function searchItems() {
+      currentPage = 0;
+      fetchItems(document.getElementById("searchInput").value);
+    }
+
+    function nextPage() {
+      currentPage++;
+      fetchItems(document.getElementById("searchInput").value);
+    }
+
+    function prevPage() {
+      if (currentPage > 0) {
+        currentPage--;
+        fetchItems(document.getElementById("searchInput").value);
+      }
+    }
+
+    function openModal(item) {
+      document.getElementById("modalTitle").textContent = item.name;
+      document.getElementById("modalImg").src = item.image || './Assets/placeholder.jpg';
+      document.getElementById("modalDesc").textContent = item.description || 'No description available.';
+      document.getElementById("itemModal").classList.remove("hidden");
+    }
+
+    function closeModal() {
+      document.getElementById("itemModal").classList.add("hidden");
+    }
+
+    // Initial fetch
+    fetchItems();
+  </script>
+</body>
+</html>

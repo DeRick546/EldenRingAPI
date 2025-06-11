@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <meta name="description" content="Elden Ring - Portfolio" />
+  <meta name="author" content="Rick de Cuijper" />
+  <title>Elden Ring - Portfolio</title>
+  <link rel="icon" href="./Assets/swordIcon.png" type="image/x-icon" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="min-h-screen bg-gray-100 text-gray-800 font-sans">
+
+  <header class="bg-white shadow p-6 text-center">
+    <h1 class="text-4xl font-bold">Elden Ring - Portfolio</h1>
+    <nav class="mt-4">
+      <ul class="flex justify-center items-center space-x-6">
+        <li><a href="index.html" class="text-blue-600 hover:underline">Bosses</a></li>
+        <li><a href="armors.html" class="text-blue-600 hover:underline">Armors</a></li>
+        <li><a href="weapons.html" class="text-blue-800 font-semibold underline">Weapons</a></li>
+        <li><a href="incantations.html" class="text-blue-600 hover:underline">Incantations</a></li>
+        <li><a href="sorceries.html" class="text-blue-600 hover:underline">Sorceries</a></li>
+        <li><a href="talismans.html" class="text-blue-600 hover:underline">Talismans</a></li>
+        <li>
+          <a href="https://hz.nl/" target="_blank" rel="noopener noreferrer">
+            <img src="./Assets/hz_logo.png" alt="HZ University Logo" class="h-10" />
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- Main -->
+  <main class="max-w-6xl mx-auto p-6">
+    <section class="text-center mb-12">
+      <h2 class="text-3xl font-semibold mb-4">Elden Ring: Weapons</h2>
+      <p class="text-gray-600">Browse the arsenal of the Tarnished.</p>
+    </section>
+
+    <!-- Search -->
+    <section class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+      <input type="text" id="searchInput" placeholder="Search weapon by name..."
+        class="w-full p-2 border border-gray-300 rounded-lg" />
+      <button onclick="searchWeapons()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Search</button>
+    </section>
+
+    <!-- Grid -->
+    <div id="weaponGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+
+    <!-- Pagination -->
+    <section class="flex justify-center gap-4 mt-10">
+      <button onclick="prevPage()" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Previous</button>
+      <button onclick="nextPage()" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Next</button>
+    </section>
+  </main>
+
+  <!-- Modal -->
+  <section id="weaponModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <article class="bg-white p-6 rounded-xl max-w-xl w-full relative shadow-xl">
+      <button onclick="closeModal()" class="absolute top-2 right-4 text-gray-500 text-2xl font-bold">&times;</button>
+      <h2 id="modalTitle" class="text-2xl font-bold mb-2"></h2>
+      <p id="modalType" class="text-sm text-gray-600 mb-1"></p>
+      <p id="modalAttack" class="text-sm text-gray-600 mb-2"></p>
+      <img id="modalImg" class="w-full h-64 object-cover rounded-xl mb-4" />
+      <p id="modalDesc" class="text-gray-700"></p>
+    </article>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-white shadow-inner p-6 text-center text-sm text-gray-700 mt-12">
+    <p>Author: Rick de Cuijper · Contact: <a href="mailto:cuij003@hz.nl" class="text-blue-600 hover:underline">cuij003@hz.nl</a></p>
+    <p>
+      <a href="https://hz.nl/" target="_blank" class="hover:underline">HZ Website</a> |
+      <a href="https://learn.hz.nl/my/" target="_blank" class="hover:underline">HZ Learn</a> |
+      <a href="https://github.com/DeRick546" target="_blank" class="hover:underline">My GitHub</a>
+    </p>
+  </footer>
+
+  <!-- Script -->
+  <script>
+    const grid = document.getElementById("weaponGrid");
+    let currentPage = 0;
+    const limit = 12;
+
+    async function fetchWeapons(query = '') {
+      grid.innerHTML = `<p class="col-span-3 text-center text-gray-500">Loading weapons...</p>`;
+      let url = `https://eldenring.fanapis.com/api/weapons?limit=${limit}&page=${currentPage}`;
+      if (query) url += `&name=${encodeURIComponent(query)}`;
+      try {
+        const res = await fetch(url);
+        const json = await res.json();
+        grid.innerHTML = "";
+        if (!json.data || json.data.length === 0) {
+          grid.innerHTML = `<p class="col-span-3 text-center text-gray-500">No weapons found.</p>`;
+          return;
+        }
+        json.data.forEach(renderWeaponCard);
+      } catch (err) {
+        console.error(err);
+        grid.innerHTML = `<p class="col-span-3 text-center text-red-500">Failed to load data.</p>`;
+      }
+    }
+
+    function renderWeaponCard(weapon) {
+      const card = document.createElement("div");
+      card.className = "bg-white p-4 rounded-xl shadow-md w-full cursor-pointer transition hover:scale-105";
+      card.innerHTML = `
+        <img src="${weapon.image || 'https://via.placeholder.com/300x200?text=No+Image'}"
+             alt="${weapon.name}" class="w-full h-48 object-cover rounded mb-3" />
+        <h3 class="text-xl font-semibold">${weapon.name}</h3>
+        <p class="text-sm text-gray-600">${weapon.category || 'Unknown type'}</p>
+      `;
+      card.onclick = () => openModal(weapon);
+      grid.appendChild(card);
+    }
+
+    function openModal(weapon) {
+      document.getElementById("modalTitle").textContent = weapon.name;
+      document.getElementById("modalType").textContent = `🛡 Type: ${weapon.category || 'Unknown'}`;
+      document.getElementById("modalAttack").textContent = `⚔️ Attack: ${weapon.attack?.amount || 'N/A'}`;
+      document.getElementById("modalImg").src = weapon.image || 'https://via.placeholder.com/300x200?text=No+Image';
+      document.getElementById("modalDesc").textContent = weapon.description || "No description.";
+      document.getElementById("weaponModal").classList.remove("hidden");
+    }
+
+    function closeModal() {
+      document.getElementById("weaponModal").classList.add("hidden");
+    }
+
+    function searchWeapons() {
+      currentPage = 0;
+      fetchWeapons(document.getElementById("searchInput").value);
+    }
+
+    function nextPage() {
+      currentPage++;
+      fetchWeapons(document.getElementById("searchInput").value);
+    }
+
+    function prevPage() {
+      if (currentPage > 0) {
+        currentPage--;
+        fetchWeapons(document.getElementById("searchInput").value);
+      }
+    }
+
+    // Initial Load
+    fetchWeapons();
+  </script>
+</body>
+</html>
